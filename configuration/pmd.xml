@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE ruleset>
+<ruleset name="Custom ruleset" 
+    xmlns="http://pmd.sourceforge.net/ruleset/2.0.0" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:noNamespaceSchemaLocation="http://pmd.sourceforge.net/ruleset_xml_schema.xsd" 
+    xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 http://pmd.sourceforge.net/ruleset_2_0_0.xsd">
+    
+    <description>
+        PMD Plugin preferences rule set
+    </description>
+   
+    <exclude-pattern>.*/src/test/java/.*</exclude-pattern>
+   
+   
+    <!-- rule edit -->
+    <rule class="net.sourceforge.pmd.lang.java.rule.strings.StringInstantiationRule" 
+        dfa="false" 
+        externalInfoUrl="http://pmd.github.io/pmd-5.1.3/rules/java/strings.html#StringInstantiation" 
+        message="[PB-STR-01違反] 文字列リテラルを参照するStringはnewしないでください。" 
+        name="StringInstantiation" 
+        typeResolution="true">
+        <description>
+            Avoid instantiating String objects; this is usually unnecessary.
+        </description>
+        <priority>4</priority>
+        <example>
+            <![CDATA[
+
+                public class Foo {
+                    private String bar = new String("bar"); // just do a String bar = "bar";
+                }
+
+            ]]>
+        </example>
+    </rule>
+
+    <rule class="net.sourceforge.pmd.lang.java.rule.design.CompareObjectsWithEqualsRule" 
+        dfa="false" 
+        externalInfoUrl="http://pmd.github.io/pmd-5.1.3/rules/java/design.html#CompareObjectsWithEquals" 
+        message="[PB-STR-02,PB-NUM-08,PB-LGC-05違反] Stringやラッパクラス等、オブジェクト同士の比較はequals()メソッドでおこなってください。" 
+        name="CompareObjectsWithEquals" 
+        typeResolution="true">
+        <description>
+            Use equals() to compare object references; avoid comparing them with ==.
+        </description>
+        <priority>2</priority>
+        <example>
+            <![CDATA[
+
+                class Foo {
+                    boolean bar(String a, String b) {
+                        return a == b;
+                    }
+                }
+
+            ]]>
+        </example>
+    </rule>
+
+    <rule class="net.sourceforge.pmd.lang.java.rule.finalizers.AvoidCallingFinalizeRule" 
+        dfa="false" 
+        externalInfoUrl="http://pmd.github.io/pmd-5.1.3/rules/java/finalizers.html#AvoidCallingFinalize" 
+        message="[PB-LGC-08違反] finalize()メソッドを明示的に呼び出すことは避けてください。" 
+        name="AvoidCallingFinalize" 
+        typeResolution="true">
+        <description>
+            Object.finalize() is called by the garbage collector on an object when garbage collection determines that there are no more references to the object.
+        </description>
+        <priority>2</priority>
+        <example>
+            <![CDATA[
+
+                public class Foo {
+                    void foo() {
+                        Bar b = new Bar();
+                        b.finalize();
+                    }
+                }
+
+            ]]>
+        </example>
+    </rule>
+
+    <rule class="net.sourceforge.pmd.lang.java.rule.design.CloseResourceRule" 
+        dfa="false" 
+        externalInfoUrl="http://pmd.github.io/pmd-5.1.3/rules/java/design.html#CloseResource" 
+        message="[PB-LGC-12,PB-LGC-12a違反] リソース {0} をfinally句で確実にcloseしてください。" 
+        name="CloseResource" 
+        typeResolution="true">
+        <description>
+            Ensure that resources (like Connection, Statement, and ResultSet objects) are always closed after use.
+        </description>
+        <priority>4</priority>
+        <properties>
+            <property name="types" 
+                value="Connection,Statement,ResultSet,PreparedStatement,BufferedInputStream,BufferedOutputStream,BufferedReader,BufferedWriter,FileInputStream,FileOutputStream,FileReader,FileWriter,FilterInputStream,FilterOutputStream,FilterReader,FilterWriter,InputStream,InputStreamReader,OutputStream,OutputStreamWriter,RandomAccessFile,Reader,Writer,ServerSocket,Socket"/>
+        </properties>
+        <example>
+            <![CDATA[
+
+                public class Bar {
+                    public void foo() {
+                        Connection c = pool.getConnection();
+                        try {
+                            // do stuff
+                        } catch (SQLException ex) {
+                            // handle exception
+                        } finally {
+                            // oops, should close the connection using 'close'!
+                            // c.close();
+                        }
+                    }
+                }
+
+            ]]>
+        </example>
+    </rule>
+
+    <rule class="net.sourceforge.pmd.lang.java.rule.optimizations.UseStringBufferForStringAppendsRule" 
+        dfa="false" 
+        externalInfoUrl="http://pmd.github.io/pmd-5.1.3/rules/java/optimizations.html#UseStringBufferForStringAppends" 
+        message="[PB-STR-03違反] String文字列に対して[+=]による連結をおこなわず、StringBufferを使用してください。" 
+        name="UseStringBufferForStringAppends" 
+        typeResolution="true">
+        <description>
+            Finds usages of += for appending strings.
+        </description>
+        <priority>2</priority>
+        <properties>
+            <property name="violationSuppressXPath">
+                <value>
+                    <![CDATA[
+
+                        //StatementExpression
+                          [PrimaryExpression/PrimaryPrefix/Name
+                            [@Image = ancestor::MethodDeclaration//LocalVariableDeclaration
+                              [./Type//ClassOrInterfaceType[@Image =
+                        'String']]/VariableDeclarator/VariableDeclaratorId/@Image]]
+                          //AssignmentOperator[@Compound='true']
+
+                    ]]>
+                </value>
+            </property>
+        </properties>
+        <example>
+            <![CDATA[
+
+                public class Foo {
+                    void bar() {
+                        String a;
+                        a = "foo";
+                        a += " bar";
+                        // better would be:
+                        // StringBuffer a = new StringBuffer("foo");
+                        // a.append(" bar");
+                    }
+                }
+
+            ]]>
+        </example>
+    </rule>
+
+    <rule ref="rulesets/java/basic.xml/AvoidMultipleUnaryOperators"/>
+    <rule ref="rulesets/java/basic.xml/BigIntegerInstantiation"/>
+    <rule ref="rulesets/java/basic.xml/BrokenNullCheck"/>
+    <rule ref="rulesets/java/basic.xml/ClassCastExceptionWithToArray"/>
+    <rule ref="rulesets/java/basic.xml/CollapsibleIfStatements"/>
+    <rule ref="rulesets/java/basic.xml/DoubleCheckedLocking"/>
+    <rule ref="rulesets/java/empty.xml/EmptyStatementNotInLoop"/>
+    <rule ref="rulesets/java/empty.xml/EmptySwitchStatements"/>
+    <rule ref="rulesets/java/empty.xml/EmptySynchronizedBlock"/>
+    <rule ref="rulesets/java/basic.xml/ForLoopShouldBeWhileLoop"/>
+    <rule ref="rulesets/java/basic.xml/JumbledIncrementer"/>
+    <rule ref="rulesets/java/basic.xml/ReturnFromFinallyBlock"/>
+    <rule ref="rulesets/java/basic.xml/UnconditionalIfStatement"/>
+    <rule ref="rulesets/java/unnecessary.xml/UnnecessaryConversionTemporary"/>
+    <rule ref="rulesets/java/unnecessary.xml/UnnecessaryFinalModifier"/>
+    <rule ref="rulesets/java/unnecessary.xml/UnnecessaryReturn"/>
+    <rule ref="rulesets/java/unnecessary.xml/UnusedNullCheckInEquals"/>
+    <rule ref="rulesets/java/unnecessary.xml/UselessOverridingMethod"/>
+    <rule ref="rulesets/java/design.xml/EqualsNull"/>
+    <rule ref="rulesets/java/logging-java.xml/SystemPrintln"/>
+    <rule ref="rulesets/java/unusedcode.xml/UnusedFormalParameter"/>
+    <rule ref="rulesets/java/unusedcode.xml/UnusedLocalVariable"/>
+    <rule ref="rulesets/java/unusedcode.xml/UnusedPrivateField"/>
+    <rule ref="rulesets/java/unusedcode.xml/UnusedPrivateMethod"/>
+</ruleset>

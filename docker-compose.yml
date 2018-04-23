@@ -1,0 +1,11 @@
+version: "2"
+
+services:
+  postgres:
+    image: repository.tools.dev.paycierge.com:18443/postgres:9.6
+    container_name: postgres
+    environment:
+      POSTGRES_PASSWORD: cduserpass
+      POSTGRES_DB: db_cd
+    ports:
+      - "5432:5432"

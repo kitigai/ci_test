@@ -1,0 +1,80 @@
+resources:
+# Get source from manage(develop)
+- name: dcpstub-develop
+  type: git
+  source:
+    username: {{git-username}}
+    password: {{git-password}}
+    uri: http://gitlab.tools.dev.paycierge.com/cardxdrive/DCplus_stub.git
+    branch: master
+
+# Get ci from cardxdrive-ci(master)
+- name: cardxdrive-ci
+  type: git
+  source:
+    username: {{git-username}}
+    password: {{git-password}}
+    uri: http://gitlab.tools.dev.paycierge.com/cardxdrive/cardxdrive-ci.git
+    branch: master
+
+# Get docker-image
+- name: mvn-docker-image
+  type: docker-image
+  source:
+    repository: repository.tools.dev.paycierge.com:18443/library/maven
+    insecure_registries:
+    - repository.tools.dev.paycierge.com:18443
+    username: {{nexus-username}}
+    password: {{nexus-password}}
+
+
+# staging environment
+- name: cardxdrive-cf-staging
+  type: cf
+  source:
+    api: {{cf-api}}
+    username: {{cf-username}}
+    password: {{cf-password}}
+    organization: {{cf-org}}
+    space: {{cf-space-staging}}
+    skip_cert_check: true
+
+jobs:
+# Deploy to nexus(dev)
+- name: deploy-to-nexus-dev
+  plan:
+  - aggregate:
+    - get: source-repo
+      resource: dcpstub-develop
+      trigger: true
+    - get: ci-repo
+      resource: cardxdrive-ci
+    - get: mvn-docker-image
+  - task: mvn-deploy
+    image: mvn-docker-image
+    file: ci-repo/ci/tasks/mvn-deploy.yml
+    params:
+      NEXUS_USERNAME: {{nexus-username}}
+      NEXUS_PASSWORD: {{nexus-password}}
+
+# Deploy to staging environment
+- name: deploy-to-cf-staging
+  plan:
+  - aggregate:
+    - get: source-repo
+      resource: dcpstub-develop
+      passed:
+      - deploy-to-nexus-dev
+      trigger: true
+    - get: ci-repo
+      resource: cardxdrive-ci
+    - get: mvn-docker-image
+  - task: mvn-download
+    image: mvn-docker-image
+    file: ci-repo/ci/tasks/mvn-download.yml
+  - put: cardxdrive-cf-staging
+    params:
+      manifest: source-repo/manifest-staging.yml
+      path: dest/app.jar
+      current_app_name: dcpstub
+

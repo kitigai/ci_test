@@ -1,0 +1,6 @@
+applications:
+- name: dcpstub
+  memory: 1024m
+  path: target/dcpstub.jar
+  routes:
+  - route: cxd-dcpstub.apps.dev.paycierge.com
